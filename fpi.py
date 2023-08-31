@@ -247,7 +247,7 @@ class LayerSelectionDockWidget(QDockWidget):
                 # Remove border for all except 'NOT DEFINED'
                 if label == 'NOT DEFINED':
                     rule.symbol().symbolLayer(0).setStrokeStyle(Qt.SolidLine)
-                    rule.symbol().symbolLayer(0).setStrokeColor(QColor(0, 0, 0, 255))  # Set to black or any color you prefer
+                    rule.symbol().symbolLayer(0).setStrokeColor(QColor(0, 0, 0, 255))
                 else:
                     rule.symbol().symbolLayer(0).setStrokeStyle(Qt.NoPen)
                     
