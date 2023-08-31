@@ -1,9 +1,11 @@
-from PyQt5.QtWidgets import QDockWidget, QVBoxLayout, QWidget, QLabel, QPushButton, QGridLayout, QApplication
 from PyQt5.QtCore import Qt
-from qgis.PyQt.QtGui import QColor
-from qgis.core import Qgis, QgsProject, QgsField, QgsMarkerSymbol, QgsVectorLayer, QgsRuleBasedRenderer, QgsFeatureRequest
-from qgis.PyQt.QtCore import QVariant
 from qgis.utils import iface
+from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtCore import QVariant
+from qgis.core import Qgis, QgsProject, QgsField, QgsMarkerSymbol, QgsVectorLayer, QgsRuleBasedRenderer, \
+    QgsFeatureRequest
+from PyQt5.QtWidgets import QDockWidget, QVBoxLayout, QWidget, QLabel, QPushButton, QGridLayout, QApplication, \
+    QProgressBar, QHBoxLayout
 
 # Your classes
 CLASSES = [
@@ -57,18 +59,28 @@ CLASSES = [
     }
 ]
 
+
 class LayerSelectionDockWidget(QDockWidget):
     def __init__(self, classes):
         super(LayerSelectionDockWidget, self).__init__()
+        self.classes = None
+        self.cls_selected = None
+        self.progress_message_bar = None
+        self.progress_bar = None
+        self.widget = None
+        self.init(classes)
 
+    def init(self, classes):
         self.setWindowTitle("Fast Point Inspection")
         self.classes = classes
         self.cls_selected = None
+        self.progress_message_bar = None
+        self.progress_bar = None
         self.widget = QWidget()
         self.setWidget(self.widget)
-        
+
         layout = QVBoxLayout()
-        
+
         # Get the point layer from the project
         self.point_layer = self.get_point_layer()
 
@@ -84,8 +96,7 @@ class LayerSelectionDockWidget(QDockWidget):
         if self.point_layer is not None:
             self.zoom_to_5000()
             self.add_class_field()
-        
-        
+
         # Label to show the current selected class
         self.current_class_label = QLabel("Class not selected")
         self.current_class_label.setAlignment(Qt.AlignCenter)
@@ -103,28 +114,69 @@ class LayerSelectionDockWidget(QDockWidget):
             btn.clicked.connect(lambda _, cls=cls: self.on_class_selected(cls))
             btn.setCursor(Qt.PointingHandCursor)
             self.class_buttons.append(btn)
-            
+
             class_layout.addWidget(btn, row, col)
             col += 1
             if col >= 2:  # Set the number of columns in the grid
                 col = 0
                 row += 1
         self.point_layer.selectionChanged.connect(self.set_class_for_selected_features)
-    
+
         # Clear classification button
         clear_btn = QPushButton("Clear Classification")
         clear_btn.clicked.connect(self.clear_classification)
         clear_btn.setCursor(Qt.PointingHandCursor)
-        
+
         layout.addLayout(class_layout)
         layout.addWidget(clear_btn)
-       
+
         self.widget.setLayout(layout)
-        
+
         # Add the dock widget to the QGIS interface
         iface.addDockWidget(Qt.RightDockWidgetArea, self)
-        
-        
+
+    def reset(self):
+        self.classes = None
+        self.cls_selected = None
+        self.progress_message_bar = None
+        self.progress_bar = None
+        self.widget = None
+
+    def start_processing(self):
+        # Remove existing progress bar if any
+        if self.progress_message_bar:
+            self.finish_progress()
+
+        self.progress_message_bar = iface.messageBar().createMessage("")
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setMaximum(100)
+
+        # Create a QWidget to hold the progress bar
+        container = QWidget()
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(QLabel("Processing..."))
+        layout.addWidget(self.progress_bar)
+        container.setLayout(layout)
+
+        self.progress_message_bar.layout().addWidget(container)
+        iface.messageBar().pushWidget(self.progress_message_bar, Qgis.Info)
+
+    def update_progress(self, value):
+        if self.progress_bar:
+            self.progress_bar.setValue(value)
+        else:
+            self.start_processing()
+            self.progress_bar.setValue(value)
+
+    def finish_progress(self):
+        if self.progress_message_bar:
+            # Hide and remove the progress bar
+            iface.messageBar().clearWidgets()
+            self.progress_bar = None
+            self.progress_message_bar = None
+
     def zoom_to_5000(self):
         # Set the extent to the layer's extent
         iface.mapCanvas().setExtent(self.point_layer.extent())
@@ -134,9 +186,8 @@ class LayerSelectionDockWidget(QDockWidget):
 
         # Refresh the canvas
         iface.mapCanvas().refresh()
-    
+
     def clear_classification(self):
-        QApplication.instance().setOverrideCursor(Qt.BusyCursor)
         if self.point_layer is None:
             QApplication.instance().setOverrideCursor(Qt.ArrowCursor)
             return
@@ -145,10 +196,9 @@ class LayerSelectionDockWidget(QDockWidget):
         self.current_class_label.setStyleSheet("background-color: none; font-size: 25px;")
         self.cls_selected = {
             "class": None,
-            "rgba": "0,0,0,0"
+            "rgba": "0,0,0,80"
         }
-        QApplication.instance().setOverrideCursor(Qt.ArrowCursor)
-        
+
     def get_point_layer(self):
         for layer in QgsProject.instance().mapLayers().values():
             if isinstance(layer, QgsVectorLayer) and layer.geometryType() == 0:  # 0: Point, 1: Line, 2: Polygon
@@ -161,23 +211,35 @@ class LayerSelectionDockWidget(QDockWidget):
             field = QgsField("class", QVariant.String)
             provider.addAttributes([field])
             self.point_layer.updateFields()
-    
+
     def on_class_selected(self, cls):
         self.cls_selected = cls
         self.current_class_label.setText(f"{cls['class']}")
-        self.current_class_label.setStyleSheet(f"background-color: rgb({','.join(cls['rgba'].split(',')[:3])}); font-size: 25px;")
+        self.current_class_label.setStyleSheet(
+            f"background-color: rgb({','.join(cls['rgba'].split(',')[:3])}); font-size: 25px;")
         iface.actionSelectFreehand().trigger()
-    
+
     def set_class_for_selected_features(self):
         try:
-            QApplication.instance().setOverrideCursor(Qt.BusyCursor)
-            
+            self.start_processing()
             cls = self.cls_selected
+
+            if cls is None:
+                iface.messageBar().pushMessage(
+                    'ON_SET_CLASS',
+                    "Please choose a class; none has been selected yet.",
+                    level=Qgis.Critical,
+                    duration=5,
+                )
+                self.update_progress(100)
+                self.finish_progress()
+                return
 
             selected_features = [feature.id() for feature in self.point_layer.selectedFeatures()]
             request = QgsFeatureRequest()
             request.setFilterFids(selected_features)
-            
+            # self.update_progress(10)
+
             rgba = [int(i) for i in cls['rgba'].split(',')]
 
             iface.mapCanvas().setSelectionColor(QColor(rgba[0], rgba[1], rgba[2], rgba[3]))
@@ -185,39 +247,48 @@ class LayerSelectionDockWidget(QDockWidget):
             all_features = list(self.point_layer.getFeatures(request))
             class_idx = self.point_layer.fields().indexOf('class')
 
+            total_features = len(all_features)
+            progress_per_feature = 70.0 / total_features
+
             self.point_layer.startEditing()
 
             attribute_map = {}
-            
-            for feature in all_features:
+
+            for i, feature in enumerate(all_features):
                 feature_id = feature.id()
                 attributes = {class_idx: cls['class']}
                 attribute_map[feature_id] = attributes
 
+                self.update_progress(10 + (i + 1) * progress_per_feature)
+
+            self.update_progress(80)
             self.point_layer.dataProvider().changeAttributeValues(attribute_map)
 
             self.point_layer.commitChanges()
+            self.update_progress(90)
             self.set_feature_color()
-            QApplication.instance().setOverrideCursor(Qt.ArrowCursor)
+            self.update_progress(100)
+            self.finish_progress()
         except Exception as e:
-            QApplication.instance().setOverrideCursor(Qt.ArrowCursor)
+            self.update_progress(100)
+            self.finish_progress()
             iface.messageBar().pushMessage(
                 'ON_SET_CLASS',
-                "Error when run save class",
+                "An error occurred while attempting to save the class.",
                 level=Qgis.Critical,
                 duration=5,
             )
-            print(e)
+            pass
 
     def set_feature_color(self):
-        try:       
+        try:
             # Create default symbol and renderer
             symbol = QgsMarkerSymbol.createSimple({'name': 'square'})
-            
+
             symbol_layer = symbol.symbolLayer(0)
             symbol_layer.setStrokeStyle(Qt.SolidLine)
             symbol_layer.setStrokeColor(QColor(0, 0, 0, 255))
-            
+
             renderer = QgsRuleBasedRenderer(symbol)
 
             # Prepare rules
@@ -230,47 +301,43 @@ class LayerSelectionDockWidget(QDockWidget):
                 )
 
             # Additional rule for NOT DEFINED
-            rules.append(('NOT DEFINED', ' "class" is NULL ', QColor(0, 0, 0, 0)))
-            
+            rules.append(('NOT DEFINED', ' "class" is NULL ', QColor(0, 0, 0, 80)))
 
             # Set up the rule-based symbology
             root_rule = renderer.rootRule()
-            
+
             for label, expression, color in rules:
                 rule = root_rule.children()[0].clone()
                 rule.setLabel(label)
                 rule.setFilterExpression(expression)
-                
+
                 # Set color
                 rule.symbol().setColor(color)
-                
+
                 # Remove border for all except 'NOT DEFINED'
                 if label == 'NOT DEFINED':
                     rule.symbol().symbolLayer(0).setStrokeStyle(Qt.SolidLine)
                     rule.symbol().symbolLayer(0).setStrokeColor(QColor(0, 0, 0, 255))
                 else:
                     rule.symbol().symbolLayer(0).setStrokeStyle(Qt.NoPen)
-                    
+
                 root_rule.appendChild(rule)
-            
+
             # Remove default rule
             root_rule.removeChildAt(0)
-            
+
             # Apply the renderer to the layer
             self.point_layer.setRenderer(renderer)
             iface.layerTreeView().refreshLayerSymbology(self.point_layer.id())
             self.point_layer.triggerRepaint()
         except Exception as e:
-            QApplication.instance().setOverrideCursor(Qt.ArrowCursor)
             iface.messageBar().pushMessage(
                 'ON_SET_FEATURE_COLOR',
-                "Error when setting feature color",
+                "Failed to Set Feature Color",
                 level=Qgis.Critical,
                 duration=5,
             )
-            print(e)
+            pass
 
-try:
-    LayerSelectionDockWidget(CLASSES)
-except Exception as e:
-    print(e)
+
+LayerSelectionDockWidget(CLASSES)
