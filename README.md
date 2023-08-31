@@ -44,11 +44,12 @@ CLASSES = [
         "rgba": "50,168,82,77"
     },
     {
-        "class": "APICUM",
+        "class": "PASTAGEM",
         "rgba": "30,148,150,77"
     }
 ]
 ```
+![Fast Point Inspection Interface](./table.png)
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
