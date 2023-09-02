@@ -94,7 +94,7 @@ class LayerSelectionDockWidget(QDockWidget):
             return
 
         if self.point_layer is not None:
-            self.zoom_to_5000()
+            self.zoom()
             self.add_class_field()
 
         # Label to show the current selected class
@@ -177,19 +177,21 @@ class LayerSelectionDockWidget(QDockWidget):
             self.progress_bar = None
             self.progress_message_bar = None
 
-    def zoom_to_5000(self):
+    def zoom(self):
         # Set the extent to the layer's extent
         iface.mapCanvas().setExtent(self.point_layer.extent())
+        self.point_layer.extent()
 
         # Set the scale to 1:5000
         iface.mapCanvas().zoomScale(5000)
 
+        iface.mapCanvas().setDestinationCrs(self.point_layer.crs())
+
         # Refresh the canvas
-        iface.mapCanvas().refresh()
+        iface.mapCanvas().refreshAllLayers()
 
     def clear_classification(self):
         if self.point_layer is None:
-            QApplication.instance().setOverrideCursor(Qt.ArrowCursor)
             return
         iface.actionSelectFreehand().trigger()
         self.current_class_label.setText("Removing Classification")
@@ -201,7 +203,7 @@ class LayerSelectionDockWidget(QDockWidget):
 
     def get_point_layer(self):
         for layer in QgsProject.instance().mapLayers().values():
-            if isinstance(layer, QgsVectorLayer) and layer.geometryType() == 0:  # 0: Point, 1: Line, 2: Polygon
+            if isinstance(layer, QgsVectorLayer):
                 return layer
         return None
 
