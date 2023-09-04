@@ -2,7 +2,7 @@
 
 Fast Point Inspection is a QGIS plugin that streamlines the process of classifying point geometries in a layer. It provides a user-friendly dock widget containing buttons for each class type. Users can select features and then classify them by clicking on these buttons.
 
-![Fast Point Inspection Interface](./script.png)
+![Fast Point Inspection Interface](./fpi.gif)
 
 
 ## Features
@@ -49,7 +49,7 @@ CLASSES = [
     }
 ]
 ```
-![Fast Point Inspection Interface](./table.png)
+![Fast Point Inspection Interface](./fpi-table.gif)
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
