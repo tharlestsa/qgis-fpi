@@ -9,54 +9,98 @@ from PyQt5.QtWidgets import QDockWidget, QVBoxLayout, QWidget, QLabel, QPushButt
 
 # Your classes
 CLASSES = [
-    {
-        "class": "AFLORAMENTO ROCHOSO",
-        "rgba": "50,168,82,77"
-    },
-    {
-        "class": "APICUM",
-        "rgba": "30,148,150,77"
-    },
-    {
-        "class": "CULTURA ANUAL E PERENE",
-        "rgba": "51,62,71,77"
-    },
-    {
-        "class": "FLORESTA PLANTADA",
-        "rgba": "99,197,204,77"
-    },
-    {
-        "class": "FORMAÇÃO CAMPESTRE",
-        "rgba": "17,149,14,77"
-    },
-    {
-        "class": "FORMAÇÃO FLORESTAL",
-        "rgba": "173,223,231,77"
-    },
-    {
-        "class": "FORMAÇÃO SAVÂNICA",
-        "rgba": "123,174,190,77"
-    },
-    {
-        "class": "MANGUE",
-        "rgba": "155,168,28,77"
-    },
-    {
-        "class": "MINERAÇÃO",
-        "rgba": "99,127,136,77"
-    },
-    {
-        "class": "PASTAGEM",
-        "rgba": "228,170,55,77"
-    },
-    {
-        "class": "PRAIA E DUNA",
-        "rgba": "171,132,126,77"
-    },
-    {
-        "class": "RIO, LAGO E OCEANO",
-        "rgba": "64,113,194,77"
-    }
+	{
+		"class": "Afloramento Rochoso",
+		"rgba": "255,170,95,77"
+	},
+	{
+		"class": "Agricultura",
+		"rgba": "233,116,237,77"
+	},
+	{
+		"class": "Apicum",
+		"rgba": "252,129,20,77"
+	},
+	{
+		"class": "Aquicultura",
+		"rgba": "9,16,119,77"
+	},
+	{
+		"class": "Campo Alagado e Área Pantanosa",
+		"rgba": "81,151,153,77"
+	},
+	{
+		"class": "Floresta Alagável (beta)",
+		"rgba": "2,105,117,77"
+	},
+	{
+		"class": "Formação Campestre",
+		"rgba": "214,188,116,77"
+	},
+	{
+		"class": "Formação Florestal",
+		"rgba": "31,141,73,77"
+	},
+	{
+		"class": "Formação Savânica",
+		"rgba": "125,201,117,77"
+	},
+	{
+		"class": "Lavoura Perene",
+		"rgba": "208,130,222,77"
+	},
+	{
+		"class": "Lavoura Temporária",
+		"rgba": "194,123,160,77"
+	},
+	{
+		"class": "Mangue",
+		"rgba": "4,56,29,77"
+	},
+	{
+		"class": "Mineração",
+		"rgba": "156,0,39,77"
+	},
+	{
+		"class": "Mosaico de Usos",
+		"rgba": "255,239,195,77"
+	},
+	{
+		"class": "Outras Formações não Florestais",
+		"rgba": "216,159,92,77"
+	},
+	{
+		"class": "Outras Áreas não Vegetadas",
+		"rgba": "219,77,79,77"
+	},
+	{
+		"class": "Pastagem",
+		"rgba": "237,222,142,77"
+	},
+	{
+		"class": "Praia, Duna e Areal",
+		"rgba": "255,160,122,77"
+	},
+	{
+		"class": "Restinga Arbórea",
+		"rgba": "2,214,89,77"
+	},
+	{
+		"class": "Restinga Herbácea",
+		"rgba": "173,81,0,77"
+	},
+	{
+		"class": "Rio, Lago e Oceano",
+		"rgba": "37,50,228,77"
+	},
+	{
+		"class": "Silvicultura",
+		"rgba": "122,89,0,77"
+	},
+	{
+		"class": "Área Urbanizada",
+		"rgba": "212,39,30,77"
+	},
 ]
 
 
