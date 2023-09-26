@@ -280,8 +280,9 @@ class LayerSelectionDockWidget(QDockWidget):
     def add_class_field(self):
         provider = self.point_layer.dataProvider()
         if provider.fieldNameIndex("class") == -1:
-            field = QgsField("class", QVariant.String)
-            provider.addAttributes([field])
+            class_id = QgsField("class_id", QVariant.Int)
+            _class = QgsField("class", QVariant.String)
+            provider.addAttributes([class_id, _class])
             self.point_layer.updateFields()
 
     def on_class_selected(self, cls):
@@ -317,6 +318,7 @@ class LayerSelectionDockWidget(QDockWidget):
             iface.mapCanvas().setSelectionColor(QColor(rgba[0], rgba[1], rgba[2], rgba[3]))
 
             all_features = list(self.point_layer.getFeatures(request))
+            class_id_idx = self.point_layer.fields().indexOf('class_id')
             class_idx = self.point_layer.fields().indexOf('class')
 
             total_features = len(all_features)
@@ -328,7 +330,7 @@ class LayerSelectionDockWidget(QDockWidget):
 
             for i, feature in enumerate(all_features):
                 feature_id = feature.id()
-                attributes = {class_idx: cls['class']}
+                attributes = {class_id_idx: cls['class_id'], class_idx: cls['class']}
                 attribute_map[feature_id] = attributes
 
                 self.update_progress(10 + (i + 1) * progress_per_feature)
@@ -411,5 +413,8 @@ class LayerSelectionDockWidget(QDockWidget):
             )
             pass
 
-
-LayerSelectionDockWidget(CLASSES)
+try:
+    LayerSelectionDockWidget(CLASSES)
+except Exception as e:
+    print(f"{e}")
+    pass
