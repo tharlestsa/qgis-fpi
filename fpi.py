@@ -45,7 +45,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QScrollArea
 )
-
+from qgis import utils
 # Initialize Qt resources from file resources.py
 from .resources import *
 
@@ -92,7 +92,7 @@ class FastPointInspection:
         self.toolbar = self.iface.addToolBar(u'FastPointInspection')
         self.toolbar.setObjectName(u'FastPointInspection')
 
-        #print "** INITIALIZING FastPointInspection"
+        # print "** INITIALIZING FastPointInspection"
 
         self.pluginIsActive = False
         self.dockwidget = None
@@ -106,6 +106,7 @@ class FastPointInspection:
         self.class_buttons = []
         self.class_layout = None
         self.layout = None
+
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -122,16 +123,16 @@ class FastPointInspection:
         return QCoreApplication.translate('FastPointInspection', message)
 
     def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+            self,
+            icon_path,
+            text,
+            callback,
+            enabled_flag=True,
+            add_to_menu=True,
+            add_to_toolbar=True,
+            status_tip=None,
+            whats_this=None,
+            parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -194,7 +195,6 @@ class FastPointInspection:
 
         return action
 
-
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
@@ -205,12 +205,12 @@ class FastPointInspection:
             callback=self.run,
             parent=self.iface.mainWindow())
 
-    #--------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
 
-        #print "** CLOSING FastPointInspection"
+        # print "** CLOSING FastPointInspection"
 
         # disconnects
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
@@ -219,15 +219,22 @@ class FastPointInspection:
         # for reuse if plugin is reopened
         # Commented next statement since it causes QGIS crashe
         # when closing the docked window:
-        # self.dockwidget = None
-
+        self.dockwidget = None
+        self.classes = None
+        self.cls_selected = None
+        self.progress_message_bar = None
+        self.progress_bar = None
+        self.current_class_label = None
+        self.point_layer = None
+        self.class_buttons = []
+        self.class_layout = None
+        self.layout = None
         self.pluginIsActive = False
-
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
-        #print "** UNLOAD FastPointInspection"
+        # print "** UNLOAD FastPointInspection"
 
         for action in self.actions:
             self.iface.removePluginMenu(
@@ -237,7 +244,7 @@ class FastPointInspection:
         # remove the toolbar
         del self.toolbar
 
-    #--------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -245,7 +252,7 @@ class FastPointInspection:
             if not self.pluginIsActive:
                 self.pluginIsActive = True
 
-                #print "** STARTING FastPointInspection"
+                # print "** STARTING FastPointInspection"
 
                 # dockwidget may not exist if:
                 #    first run of plugin
@@ -268,11 +275,14 @@ class FastPointInspection:
                             level=Qgis.Critical,
                             duration=5,
                         )
-                        return
 
                     if self.point_layer is not None:
                         self.zoom()
                         self.add_class_field()
+                        self.load_classes()
+
+                        self.set_feature_color()
+                        self.point_layer.selectionChanged.connect(self.set_class_for_selected_features)
 
                     # Label to show the current selected class
                     self.current_class_label = QLabel("Class not selected")
@@ -280,11 +290,6 @@ class FastPointInspection:
                     self.current_class_label.setStyleSheet("font-size: 25px;")
 
                     self.layout.addWidget(self.current_class_label)
-                    # Class buttons with grid layout
-                    self.load_classes()
-
-                    self.set_feature_color()
-                    self.point_layer.selectionChanged.connect(self.set_class_for_selected_features)
 
                     # Clear classification button
                     clear_btn = QPushButton("Clear Classification")
@@ -307,6 +312,8 @@ class FastPointInspection:
                     self.scrollArea.setWidget(contentWidget)
 
                     self.dockwidget.setWidget(self.scrollArea)
+
+                    QgsProject.instance().layerWasAdded.connect(self.handle_layer_added)
                 # connect to provide cleanup on closing of dockwidget
                 self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
@@ -321,6 +328,29 @@ class FastPointInspection:
                 duration=5,
             )
             pass
+
+    def handle_layer_added(self, layer):
+        # Check the layer's CRS
+        layer_crs = layer.crs().authid()
+        if not layer_crs:
+            new_crs = QgsProject.instance().crs().authid()
+            layer.setCrs(new_crs)
+
+    def reload_plugin(self):
+        name = 'qgis-fpi'
+
+        # Find the plugin
+        plugin = utils.plugins.get(name)
+        if plugin is None:
+            raise ValueError(f"Plugin {name} not found.")
+
+        # Unload the plugin
+        utils.unloadPlugin(name)
+
+        # Load the plugin again
+        utils.loadPlugin(name)
+        self.onClosePlugin()
+        utils.startPlugin(name)
 
     def reset(self):
         self.classes = None
@@ -428,7 +458,7 @@ class FastPointInspection:
         self.current_class_label.setStyleSheet("background-color: none; font-size: 25px;")
         self.cls_selected = {
             "class": None,
-            "rgba": "0,0,0,80",
+            "rgba": "0,0,0,20",
             "class_id": None
         }
 
@@ -548,7 +578,7 @@ class FastPointInspection:
                 )
 
             # Additional rule for NOT DEFINED
-            rules.append(('NOT DEFINED', ' "class" is NULL ', QColor(0, 0, 0, 80)))
+            rules.append(('NOT DEFINED', ' "class" is NULL ', QColor(0, 0, 0, 20)))
 
             # Set up the rule-based symbology
             root_rule = renderer.rootRule()
@@ -564,7 +594,7 @@ class FastPointInspection:
                 # Remove border for all except 'NOT DEFINED'
                 if label == 'NOT DEFINED':
                     rule.symbol().symbolLayer(0).setStrokeStyle(Qt.SolidLine)
-                    rule.symbol().symbolLayer(0).setStrokeColor(QColor(0, 0, 0, 255))
+                    rule.symbol().symbolLayer(0).setStrokeColor(QColor(0, 0, 0, 20))
                 else:
                     rule.symbol().symbolLayer(0).setStrokeStyle(Qt.NoPen)
 
@@ -574,9 +604,10 @@ class FastPointInspection:
             root_rule.removeChildAt(0)
 
             # Apply the renderer to the layer
-            self.point_layer.setRenderer(renderer)
-            self.iface.layerTreeView().refreshLayerSymbology(self.point_layer.id())
-            self.point_layer.triggerRepaint()
+            if self.point_layer is not None:
+                self.point_layer.setRenderer(renderer)
+                self.iface.layerTreeView().refreshLayerSymbology(self.point_layer.id())
+                self.point_layer.triggerRepaint()
         except Exception as e:
             self.iface.messageBar().pushMessage(
                 'ON_SET_FEATURE_COLOR',

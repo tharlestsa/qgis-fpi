@@ -23,7 +23,7 @@ hasProcessingProvider=no
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=python
+tags=point, classification, samples, QgsVectorLayer
 
 homepage=https://github.com/tharlestsa/qgis-fpi
 category=Plugins

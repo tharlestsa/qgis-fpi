@@ -4,7 +4,6 @@ Fast Point Inspection is a QGIS plugin that streamlines the process of classifyi
 
 ![Fast Point Inspection Interface](./fpi.gif)
 
-
 ## Features
 - Simple interface integrated into QGIS.
 - Batch classification of selected point features.
@@ -15,11 +14,14 @@ Fast Point Inspection is a QGIS plugin that streamlines the process of classifyi
 ### Prerequisites
 Make sure you have QGIS installed on your system.
 
-### Install via Python Console
+
+### Install via Plugin Manager
+
 1. Open QGIS.
-2. Open the Python Console (`Plugins -> Python Console` or press `Ctrl+Alt+P`).
-3. Go to the `Show Editor` tab.
-4. Copy-paste the script `fpi.py` into the editor and run it.
+2. Navigate to `Plugins` -> `Manage and Install Plugins...`.
+3. In the opened window, use the search bar to find "Fast Point Inspection".
+4. From the results, select the "Fast Point Inspection" plugin.
+5. Click the `Install plugin` button
 
 ## Usage
 1. Once installed, the dock widget should appear on the right-hand side of the QGIS window.
