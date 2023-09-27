@@ -42,16 +42,22 @@ Here's an example:
 ```python
 CLASSES = [
     {
-        "class": "AFLORAMENTO ROCHOSO",
-        "rgba": "50,168,82,77"
+        "class": "Agricultura",
+        "rgba": "233,116,237,77",
+        "class_id":18
     },
     {
-        "class": "PASTAGEM",
-        "rgba": "30,148,150,77"
-    }
+        "class": "Apicum",
+        "rgba": "252,129,20,77",
+        "class_id":32
+    },
+    {
+        "class": "Aquicultura",
+        "rgba": "9,16,119,77",
+        "class_id":31
+    },
 ]
 ```
-![Fast Point Inspection Interface](./fpi-table.gif)
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
