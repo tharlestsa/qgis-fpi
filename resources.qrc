@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/fpi" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
